@@ -1,0 +1,37 @@
+-- Show the student that made the most mistakes for each country. -> for each country, the student with highest tot incorrect answer
+-- generate -> topcount per ogni countryname
+select [Measures].[IncorrectAnswers] on columns,
+	   generate(
+				[Geography].[Country Name].[Country Name],
+	   topcount( ([Geography].[Country Name].currentmember,
+	               [Users].[Userid].[Userid]), 1, [Measures].[IncorrectAnswers] )
+	   ) on rows
+from [Group 13 DB]
+
+-- For each subject, show the student with the highest total correct answers
+select [Measures].[CorrectAnswers] on columns,
+	   nonempty(generate(
+				[Subject].[Subjectid].[Subjectid],
+	   topcount( ([Subject].[Subjectid].currentmember,
+	               [Users].[Userid].[Userid]), 1, [Measures].[CorrectAnswers] )
+	   )) on rows
+from [Group 13 DB]
+
+-- For each continent, show the student with the highest ratio between his total correct
+-- answers and the average correct answers of that continent.
+with member AvgCorrectAnswers as 
+		avg(
+			([Geography].[Continent],
+			[Users].[Userid].[Userid]),
+			[Measures].[CorrectAnswers]
+			)
+member Ratio as
+			[Measures].[CorrectAnswers] / AvgCorrectAnswers
+
+select {[Measures].[CorrectAnswers],AvgCorrectAnswers, Ratio} on columns,
+	   generate(
+				[Geography].[Continent].[Continent],
+	   topcount(([Geography].[Continent].currentmember,
+	               [Users].[Userid].[Userid]), 1, Ratio )
+				) on rows
+from [Group 13 DB]
